@@ -1,0 +1,42 @@
+{
+    "name": "jasirilabs/flysystem-cloudinary",
+    "description": "Flysystem Adapter for the Cloudinary v2 API",
+    "keywords": [
+        "jasirilabs",
+        "flysystem-cloudinary"
+    ],
+    "homepage": "https://github.com/jasirilabs/flysystem-cloudinary",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Bruno Alfred",
+            "email": "hello@brunoalfred.me",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "JasiriLabs\\FlysystemCloudinary\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "JasiriLabs\\FlysystemCloudinary\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage"
+
+    },
+    "config": {
+        "sort-packages": true
+    }
+}
