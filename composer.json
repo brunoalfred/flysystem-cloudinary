@@ -16,9 +16,13 @@
         }
     ],
     "require": {
-        "php": "^7.4|^8.0"
+        "php": "^7.4|^8.0",
+        "cloudinary/cloudinary_php": "^2.6",
+        "league/flysystem": "^3.0"
     },
     "require-dev": {
+        "league/flysystem-adapter-test-utilities": "^3.0",
+        "phpstan/phpstan": "^1.4",
         "phpunit/phpunit": "^9.0"
     },
     "autoload": {
