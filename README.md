@@ -38,7 +38,7 @@ CLOUDINARY_SECRET=
 Add cloudinary disk in `filesystem.php`
 
 ```php
-
+		... 
 	'disk' => 
 	[
 		...
@@ -51,9 +51,11 @@ Add cloudinary disk in `filesystem.php`
 	]
 
 ```
+
+Add the following on boot method of `AppServiceProvider.php`  file
+
 ```php
 Storage::extend('cloudinary', function ($app, $config) {
-
 
             $configuration = new Configuration();
             $configuration->cloud->cloudName = $config['name'];
