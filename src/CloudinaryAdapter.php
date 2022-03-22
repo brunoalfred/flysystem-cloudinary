@@ -169,9 +169,15 @@ class CloudinaryAdapter implements FilesystemAdapter
 
     public function lastModified(string $path): FileAttributes
     {
-        // TODO: Get timestamp for last modification of the file
 
-        $timestamp = '';
+        $response = $this->cloudinary->adminApi()->asset($path);
+
+        $jsonResponse = json_encode($response);
+    
+        $timestamp = json_decode($jsonResponse, TRUE)['created_at'];
+
+        $timestamp = strtotime($timestamp);
+        
         return new FileAttributes(
             $path,
             null,
@@ -183,7 +189,7 @@ class CloudinaryAdapter implements FilesystemAdapter
     public function fileSize(string $path): FileAttributes
     {
 
-        // TODO: Get file size
+        
 
         return new FileAttributes(
             $path,
