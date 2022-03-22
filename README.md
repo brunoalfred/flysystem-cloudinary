@@ -1,10 +1,17 @@
-# Very short description of the package
+<div align="center">
+    <h1> Flysystem Adapter for Cloudinary API</h1>
+</div>
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/jasirilabs/flysystem-cloudinary.svg?style=flat-square)](https://packagist.org/packages/jasirilabs/flysystem-cloudinary)
 [![Total Downloads](https://img.shields.io/packagist/dt/jasirilabs/flysystem-cloudinary.svg?style=flat-square)](https://packagist.org/packages/jasirilabs/flysystem-cloudinary)
 ![GitHub Actions](https://github.com/jasirilabs/flysystem-cloudinary/actions/workflows/main.yml/badge.svg)
 
-This is where your description should go. Try and limit it to a paragraph or two, and maybe throw in a mention of what PSRs you support to avoid any confusion with users and contributors.
+The package contains a [flysystem](https://flysystem.thephpleague.com/) adapter for cloudinary. Under the hood [Cloudinary PHP SDK](https://github.com/cloudinary/cloudinary_php)is used.
+
+## Disclaimer
+> _This package is still under active development but fill free to try out leave a PR or file an issue incase of any challenge_
+
+
 
 ## Installation
 
@@ -13,6 +20,7 @@ You can install the package via composer:
 ```bash
 composer require jasirilabs/flysystem-cloudinary
 ```
+Then follow the steps on using [custom filesystem](https://laravel.com/docs/9.x/filesystem#custom-filesystems) with laravel.
 
 ## Usage
 

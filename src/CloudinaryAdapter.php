@@ -8,6 +8,8 @@ use Cloudinary\Cloudinary;
 use League\Flysystem\FilesystemAdapter;
 use League\Flysystem\Config;
 use League\Flysystem\FileAttributes;
+use League\Flysystem\DirectoryAttributes;
+use League\Flysystem\StorageAttributes;
 use League\Flysystem\UnableToCreateDirectory;
 use League\Flysystem\UnableToReadFile;
 use League\Flysystem\UnableToDeleteDirectory;
@@ -15,18 +17,21 @@ use League\Flysystem\UnableToDeleteFile;
 use League\Flysystem\UnableToWriteFile;
 use League\Flysystem\UnableToSetVisibility;
 use League\Flysystem\UnableToRetrieveMetadata;
+use League\MimeTypeDetection\MimeTypeDetector;
+use League\MimeTypeDetection\FinfoMimeTypeDetector;
 
 class CloudinaryAdapter implements FilesystemAdapter
 {
 
 
 
-
     public function __construct(
-        public Cloudinary $cloudinary
+        public Cloudinary $cloudinary,
+        protected MimeTypeDetector $mimeTypeDetector = new FinfoMimeTypeDetector()
     ) {
     }
 
+  
     /**
      * 
      * Check if file exists  
@@ -54,7 +59,6 @@ class CloudinaryAdapter implements FilesystemAdapter
     {
         return $this->fileExists($path);
     }
-
 
 
     public function write(string $path, string $contents, Config $config): void
@@ -97,7 +101,6 @@ class CloudinaryAdapter implements FilesystemAdapter
         } catch (GeneralError $e) {
         }
     }
-
 
 
     public function readStream(string $path)
@@ -145,10 +148,12 @@ class CloudinaryAdapter implements FilesystemAdapter
         }
     }
 
+
     public function setVisibility(string $path, string $visibility): void
     {
         throw UnableToSetVisibility::atLocation($path, 'Adapter does not support visibility controls at the moment.');
     }
+
 
     public function visibility(string $path): FileAttributes
     {
@@ -214,16 +219,50 @@ class CloudinaryAdapter implements FilesystemAdapter
     public function listContents(string $path, bool $deep): iterable
     {
 
-        yield '';
+
+        try {
+            $response = $this->cloudinary->adminApi()->assets();
+
+            $response = json_encode($response);
+
+            $resources = json_decode($response, TRUE)['resources'];
+        } catch (GeneralError $e) {
+            throw UnableToRetrieveMetadata::lastModified($path, $e->getMessage());
+        }
+
+        foreach ($resources as $response) {
+            $storageAttributes[] = $this->normalizeResponse($response);
+        }
+
+
+        yield from $storageAttributes;
+    }
+
+    protected function normalizeResponse(array $response): StorageAttributes
+    {
+        //TODO: Implement normalization for DirectoryAttributes
+
+        return new FileAttributes(
+            $response['url'],
+            $response['bytes'],
+            null,
+            strtotime($response['created_at']),
+            $this->mimeTypeDetector->detectMimeTypeFromPath($response['url'])
+        );
     }
 
 
     public function move(string $source, string $destination, Config $config): void
     {
+        // TODO: move assets between folders
     }
 
 
     public function copy(string $source, string $destination, Config $config): void
     {
+        // TODO: copy assets between folders
     }
+
+
+
 }
