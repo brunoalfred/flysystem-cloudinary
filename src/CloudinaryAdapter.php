@@ -14,6 +14,7 @@ use League\Flysystem\UnableToDeleteDirectory;
 use League\Flysystem\UnableToDeleteFile;
 use League\Flysystem\UnableToWriteFile;
 use League\Flysystem\UnableToSetVisibility;
+use League\Flysystem\UnableToRetrieveMetadata;
 
 class CloudinaryAdapter implements FilesystemAdapter
 {
@@ -170,14 +171,18 @@ class CloudinaryAdapter implements FilesystemAdapter
     public function lastModified(string $path): FileAttributes
     {
 
-        $response = $this->cloudinary->adminApi()->asset($path);
+        try {
+            $response = $this->cloudinary->adminApi()->asset($path);
 
-        $jsonResponse = json_encode($response);
-    
-        $timestamp = json_decode($jsonResponse, TRUE)['created_at'];
+            $jsonResponse = json_encode($response);
+
+            $timestamp = json_decode($jsonResponse, TRUE)['created_at'];
+        } catch (GeneralError $e) {
+            throw UnableToRetrieveMetadata::lastModified($path, $e->getMessage());
+        }
 
         $timestamp = strtotime($timestamp);
-        
+
         return new FileAttributes(
             $path,
             null,
@@ -189,11 +194,19 @@ class CloudinaryAdapter implements FilesystemAdapter
     public function fileSize(string $path): FileAttributes
     {
 
-        
+        try {
+            $response = $this->cloudinary->adminApi()->asset($path);
+
+            $response = json_encode($response);
+
+            $size = json_decode($response, TRUE)['bytes'];
+        } catch (GeneralError $e) {
+            throw UnableToRetrieveMetadata::lastModified($path, $e->getMessage());
+        }
 
         return new FileAttributes(
             $path,
-            $response['size'] ?? null
+            $size
         );
     }
 
