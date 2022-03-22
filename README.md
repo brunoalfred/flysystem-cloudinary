@@ -20,13 +20,60 @@ You can install the package via composer:
 ```bash
 composer require jasirilabs/flysystem-cloudinary
 ```
-Then follow the steps on using [custom filesystem](https://laravel.com/docs/9.x/filesystem#custom-filesystems) with laravel.
+
 
 ## Usage
 
-```php
-// Usage description here
+Then follow the steps on using [custom filesystem](https://laravel.com/docs/9.x/filesystem#custom-filesystems) with laravel.
+
+**Quick Start**
+
+```env
+FILESYSTEM_DISK=
+CLOUDINARY_NAME=
+CLOUDINARY_KEY=
+CLOUDINARY_SECRET=
 ```
+
+Add cloudinary disk in `filesystem.php`
+
+```php
+
+	'disk' => 
+	[
+		...
+
+		   'cloudinary' => [
+            'driver' => 'cloudinary',
+            'name' => env('CLOUDINARY_NAME'),
+            'key' => env('CLOUDINARY_KEY'),
+            'secret' => env('CLOUDINARY_SECRET'),
+	]
+
+```
+```php
+Storage::extend('cloudinary', function ($app, $config) {
+
+
+            $configuration = new Configuration();
+            $configuration->cloud->cloudName = $config['name'];
+            $configuration->cloud->apiKey = $config['key'];
+            $configuration->cloud->apiSecret = $config['secret'];
+            $configuration->url->secure = true;
+
+            $cloudinary = new Cloudinary($configuration);
+            $adapter = new CloudinaryAdapter($cloudinary);
+
+            return new FilesystemAdapter(
+                new Filesystem($adapter, $config),
+                $adapter,
+                $config
+            );
+        });
+```
+
+
+
 
 ### Testing
 
