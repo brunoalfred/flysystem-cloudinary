@@ -2,15 +2,18 @@
 
 namespace JasiriLabs\FlysystemCloudinary;
 
-use Cloudinary\Api\Exception\AlreadyExists;
-use Cloudinary\Api\Exception\BadRequest;
+use Cloudinary\Api\Exception\NotFound;
+use Cloudinary\Api\Exception\GeneralError;
 use Cloudinary\Cloudinary;
 use League\Flysystem\FilesystemAdapter;
 use League\Flysystem\Config;
 use League\Flysystem\FileAttributes;
-use Cloudinary\Api\Upload\UploadApi;
-use Cloudinary\Api\Metadata;
-use Cloudinary\Api\Metadata\Metadata as MetadataMetadata;
+use League\Flysystem\UnableToCreateDirectory;
+use League\Flysystem\UnableToReadFile;
+use League\Flysystem\UnableToDeleteDirectory;
+use League\Flysystem\UnableToDeleteFile;
+use League\Flysystem\UnableToWriteFile;
+use League\Flysystem\UnableToSetVisibility;
 
 class CloudinaryAdapter implements FilesystemAdapter
 {
@@ -25,30 +28,27 @@ class CloudinaryAdapter implements FilesystemAdapter
 
     /**
      * 
-     * Use filename/ to check if it exists  
-     * 
+     * Check if file exists  
      * 
      **/
-
-
     public function fileExists(string $path): bool
     {
-     
-        $response = $this->cloudinary->searchApi()
-            ->expression('filename:' . $path)
-            ->execute();
-     
-       $jsonResponse = json_encode($response);
-     
-        if (json_decode($jsonResponse, TRUE)['total_count'] != 0) {
-            return true;
-        } else {
+
+        try {
+            $this->cloudinary->adminApi()->asset($path);
+        } catch (NotFound $e) {
             return false;
         }
-        
+
+        return true;
     }
 
 
+    /**
+     * 
+     * Check if directory exists  
+     * 
+     **/
     public function directoryExists(string $path): bool
     {
         return $this->fileExists($path);
@@ -59,48 +59,94 @@ class CloudinaryAdapter implements FilesystemAdapter
     public function write(string $path, string $contents, Config $config): void
     {
 
-        //TODO: Do something magical           
+        try {
+            $tempFile = tmpfile();
 
+            fwrite($tempFile, $contents);
 
+            $this->writeStream($path, $tempFile, $config);
+        } catch (GeneralError $e) {
+            throw UnableToWriteFile::atLocation($path, $e->getMessage(), $e);
+        }
     }
 
 
-    public function writeStream(string $path, $contents, Config $config): void
+    public function writeStream(string $path,  $contents, Config $config): void
     {
+
+        try {
+            $resourceMetadata = stream_get_meta_data($contents);
+
+            $this->cloudinary->uploadApi()->upload($resourceMetadata['uri']);
+        } catch (GeneralError $e) {
+            throw UnableToWriteFile::atLocation($path, $e->getMessage(), $e);
+        }
     }
 
 
     public function read(string $path): string
     {
 
+        try {
+            $resource = $this->cloudinary->adminApi()->asset($path);
 
-        return '';
+            $contents = file_get_contents($resource['secure_url']);
+
+            return (string) compact('contents', 'path');
+        } catch (GeneralError $e) {
+        }
     }
 
 
 
     public function readStream(string $path)
     {
+        try {
+            $resource = $this->cloudinary->adminApi()->asset($path);
+
+            $stream = fopen($resource['secure_url'], 'rb');
+
+            return compact('stream', 'path');
+        } catch (GeneralError $e) {
+            throw UnableToReadFile::fromLocation($path, $e->getMessage(), $e);
+        }
     }
 
 
     public function delete(string $path): void
     {
+        $response = $this->cloudinary->uploadApi()->destroy($path);
+
+        try {
+            is_array($response) && ($response['result'] == 'ok');
+        } catch (GeneralError $e) {
+            throw UnableToDeleteFile::atLocation($path, $e->getMessage(), $e);
+        }
     }
 
 
     public function deleteDirectory(string $path): void
     {
+        try {
+            $respose = $this->cloudinary->adminApi()->deleteAssetsByPrefix($path);
+        } catch (GeneralError $e) {
+            throw UnableToDeleteDirectory::atLocation($path, $e->getPrevious()->getMessage(), $e);
+        }
     }
 
 
     public function createDirectory(string $path, Config $config): void
     {
+        try {
+            $this->cloudinary->adminApi()->createFolder($path);
+        } catch (GeneralError $e) {
+            throw UnableToCreateDirectory::atLocation($path, $e->getMessage());
+        }
     }
 
     public function setVisibility(string $path, string $visibility): void
-
     {
+        throw UnableToSetVisibility::atLocation($path, 'Adapter does not support visibility controls at the moment.');
     }
 
     public function visibility(string $path): FileAttributes
@@ -123,6 +169,7 @@ class CloudinaryAdapter implements FilesystemAdapter
 
     public function lastModified(string $path): FileAttributes
     {
+        // TODO: Get timestamp for last modification of the file
 
         $timestamp = '';
         return new FileAttributes(
@@ -136,6 +183,7 @@ class CloudinaryAdapter implements FilesystemAdapter
     public function fileSize(string $path): FileAttributes
     {
 
+        // TODO: Get file size
 
         return new FileAttributes(
             $path,
